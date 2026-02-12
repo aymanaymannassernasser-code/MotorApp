@@ -1,45 +1,106 @@
-:root {
-    --bg: #0f172a;
-    --card: #1e293b;
-    --accent: #0ea5e9;
-    --text: #f8fafc;
-    --border: #334155;
-    --danger: #ef4444;
-}
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
 
-body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-header h1 { color: var(--accent); margin: 0; }
-.author { font-size: 0.7rem; opacity: 0.5; margin-top: 5px; }
+const ctx = document.getElementById('masterChart').getContext('2d');
+let masterChart;
 
-.section-title { font-size: 0.8rem; font-weight: 800; color: var(--accent); text-transform: uppercase; margin-top: 10px; border-bottom: 1px solid #334155; }
+document.getElementById('vSupp').addEventListener('input', (e) => { document.getElementById('vDisp').innerText = e.target.value; });
 
-.form-container { 
-    display: grid; grid-template-columns: 1fr; gap: 15px; 
-    background: var(--card); padding: 20px; border-radius: 12px;
-}
+document.getElementById('calcBtn').addEventListener('click', () => {
+    const P = parseFloat(document.getElementById('pKw').value);
+    const RPM = parseFloat(document.getElementById('rpm').value);
+    const J = parseFloat(document.getElementById('jTotal').value);
+    const vFact = parseFloat(document.getElementById('vSupp').value) / 100;
+    
+    // Datasheet values
+    const LRT = (parseFloat(document.getElementById('overLRT').value) || 160) / 100;
+    const LRC = (parseFloat(document.getElementById('overLRC').value) || 650) / 100;
+    const BDT = 2.4; // Internal assumption for standard BDT
+    
+    // Load parameters
+    const loadRatedTPerc = parseFloat(document.getElementById('loadDemand').value) / 100;
+    const loadOffsetPerc = parseFloat(document.getElementById('loadOffset').value) / 100;
+    
+    const Trated = (P * 9550) / RPM;
+    const ns = 1500; 
+    const sb = 0.2; // Breakdown slip
 
-@media (min-width: 768px) { .form-container { grid-template-columns: 1fr 1fr; } }
-.full-width { grid-column: 1 / -1; }
+    let labels = [], motorT = [], loadT = [], currentI = [];
+    let totalTime = 0;
+    let totalEnergy = 0; 
+    const steps = 100;
 
-.input-group label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 5px; }
-input, select { width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; }
+    for (let i = 0; i <= steps; i++) {
+        let n_perc = i / steps;
+        let s = Math.max(0.001, 1 - n_perc);
+        labels.push(Math.round(n_perc * 100));
 
-button { width: 100%; background: var(--accent); border: none; padding: 15px; color: #0f172a; font-weight: bold; border-radius: 6px; cursor: pointer; }
-.secondary-btn { background: #334155; color: white; margin-top: 5px; }
+        // Motor Torque (Kloss)
+        let klossT = (2 * BDT) / ( (s / sb) + (sb / s) );
+        if (n_perc < 0.2) {
+            let blend = n_perc / 0.2;
+            klossT = LRT * (1 - blend) + klossT * blend;
+        }
+        let Tm = klossT * Trated * Math.pow(vFact, 2);
+        
+        // Load Torque with Offset
+        let Tl_base = (document.getElementById('loadCurve').value === 'quad') 
+                      ? loadOffsetPerc + (loadRatedTPerc - loadOffsetPerc) * Math.pow(n_perc, 2)
+                      : loadOffsetPerc + (loadRatedTPerc - loadOffsetPerc); // Constant
+        
+        let Tl = Tl_base * Trated;
 
-.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 20px 0; }
-.card { background: var(--card); padding: 15px; border-radius: 10px; border-top: 3px solid var(--accent); text-align: center; }
-.card span { font-size: 0.65rem; color: #94a3b8; display: block; }
-.card b { font-size: 1.2rem; }
+        // Current Calculation
+        let Im_pu = LRC * (1 - 0.15 * n_perc); 
+        if (n_perc > 0.85) {
+            let drop = (n_perc - 0.85) / 0.15;
+            Im_pu = Im_pu * (1 - drop) + (1.0 * drop);
+        }
 
-.warning { background: #450a0a; border: 1px solid var(--danger); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        motorT.push(Tm.toFixed(1));
+        loadT.push(Tl.toFixed(1));
+        currentI.push((Im_pu * vFact * 100).toFixed(0));
 
-.charts-container { background: white; padding: 15px; border-radius: 12px; min-height: 400px; }
+        // Integration (Time & Energy)
+        if (i < steps) {
+            let Ta = Tm - Tl;
+            if (Ta > 0) {
+                let dw = (1 / steps) * (RPM * 2 * Math.PI / 60);
+                let dt = (J * dw) / Ta;
+                totalTime += dt;
+                
+                // Energy E = P * t. Rough estimate: P_rotor_loss = Slip * P_airgap
+                // Simplified for field use: Total Energy in kJ
+                totalEnergy += (P * (Im_pu * vFact) * dt); 
+            } else { totalTime = Infinity; }
+        }
+    }
 
-@media print {
-    .no-print { display: none !important; }
-    .print-only { display: block; color: black; }
-    body { background: white; }
-    .card { border: 1px solid #ddd; }
+    document.getElementById('resTime').innerText = (totalTime === Infinity) ? "STALL" : totalTime.toFixed(2) + "s";
+    document.getElementById('resEnergy').innerText = (totalTime === Infinity) ? "--" : Math.round(totalEnergy) + " kJ";
+    document.getElementById('resPeakI').innerText = (LRC * vFact * 100).toFixed(0) + "% Ir";
+
+    drawChart(labels, motorT, loadT, currentI);
+});
+
+function drawChart(labels, motor, load, current) {
+    if (masterChart) masterChart.destroy();
+    masterChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Motor Torque (Nm)', data: motor, borderColor: '#38bdf8', yAxisID: 'y', pointRadius: 0 },
+                { label: 'Load Torque (Nm)', data: load, borderColor: '#f43f5e', borderDash: [5, 5], yAxisID: 'y', pointRadius: 0 },
+                { label: 'Current (%)', data: current, borderColor: '#f59e0b', yAxisID: 'y1', pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { title: { display: true, text: 'Torque (Nm)' } },
+                y1: { title: { display: true, text: 'Current (%)' }, position: 'right', grid: { drawOnChartArea: false } }
+            }
+        }
+    });
 }
