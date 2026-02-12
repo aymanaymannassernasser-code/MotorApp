@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StartYourMotor Pro</title>
+    <title>StartYourMotor Pro | Suite</title>
     <link rel="stylesheet" href="./style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Digital Twin</small></h1>
+        <h1>StartYourMotor <small>v6.0 Digital Twin</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
@@ -23,10 +23,10 @@
         <div class="form-container no-print">
             <div class="input-group full-width">
                 <label>Project / Motor Reference</label>
-                <input type="text" id="projRef" placeholder="e.g. 500kW Chiller Pump">
+                <input type="text" id="projRef" placeholder="e.g. 11kV Water Injection Pump">
             </div>
 
-            <div class="section-title full-width">Nameplate Data</div>
+            <div class="section-title full-width">Motor Nameplate</div>
             <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
             <div class="input-group"><label>Full Load Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
             <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" value="55"></div>
@@ -37,23 +37,23 @@
 
             <div id="manualFields" class="full-width grid-sub" style="display:none;">
                 <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" value="160"></div>
-                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" value="650"></div>
-                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="240"></div>
+                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" value="600"></div>
+                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="220"></div>
             </div>
 
-            <div class="section-title full-width">Inertia & Load</div>
-            <div class="input-group"><label>Motor + Load J (kg·m²)</label><input type="number" id="jTotal" value="1.5"></div>
+            <div class="section-title full-width">Load & Inertia</div>
+            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="1.5"></div>
             <div class="input-group"><label>Load Demand @ 100% (%)</label><input type="number" id="loadDemand" value="100"></div>
             <div class="input-group"><label>Breakaway Offset (%)</label><input type="number" id="loadOffset" value="20"></div>
             <div class="input-group">
-                <label>Load Type</label>
+                <label>Load Curve</label>
                 <select id="loadCurve">
-                    <option value="quad">Centrifugal (n²)</option>
-                    <option value="const">Constant Torque</option>
+                    <option value="quad">Centrifugal (Fan/Pump)</option>
+                    <option value="const">Constant (Conveyor)</option>
                 </select>
             </div>
 
-            <div class="section-title full-width">Starter Settings</div>
+            <div class="section-title full-width">Starter Configuration</div>
             <div class="input-group">
                 <label>Method</label>
                 <select id="method">
@@ -69,22 +69,22 @@
             </div>
 
             <div class="input-group full-width">
-                <label>System Voltage: <span id="vDisp">100</span>%</label>
+                <label>Network Voltage: <span id="vDisp">100</span>%</label>
                 <input type="range" id="vSupp" min="70" max="100" value="100">
             </div>
 
-            <button id="calcBtn" class="full-width">SIMULATE DYNAMICS</button>
-            <button id="printBtn" class="secondary-btn full-width">GENERATE PDF</button>
+            <button id="calcBtn" class="full-width">ANALYZE START</button>
+            <button id="printBtn" class="secondary-btn full-width">GENERATE REPORT</button>
         </div>
 
         <div class="results">
-            <div class="card"><span>START TIME</span><b id="resTime">--</b></div>
-            <div class="card"><span>THERMAL (A²s)</span><b id="resThermal">--</b></div>
+            <div class="card"><span>RUN TIME</span><b id="resTime">--</b></div>
+            <div class="card"><span>THERMAL STRESS</span><b id="resThermal">--</b></div>
         </div>
 
         <div class="charts-container">
             <canvas id="masterChart"></canvas>
-            <p class="source-tag">Engine: Kloss Equation with Singularity Guard</p>
+            <p class="source-tag">Normalized Kloss Model | Clamped Physics Engine</p>
         </div>
     </main>
     <script src="./app.js"></script>
