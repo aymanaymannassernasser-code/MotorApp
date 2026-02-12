@@ -4,6 +4,7 @@
     --accent: #38bdf8;
     --text: #f1f5f9;
     --border: #334155;
+    --danger: #f43f5e;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,18 +17,18 @@ body {
     line-height: 1.4; 
 }
 
-/* Hidden on screen, visible on PDF */
+/* Report-only Header (Hidden on UI) */
 .print-header { display: none; }
 
 header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 header h1 { color: var(--accent); font-size: 1.2rem; }
-header h1 small { display: block; font-size: 0.7rem; opacity: 0.6; }
+header h1 small { display: block; font-size: 0.7rem; opacity: 0.6; margin-top: 4px; }
 .author { font-size: 0.6rem; opacity: 0.4; letter-spacing: 1px; text-transform: uppercase; }
 
-/* Responsive Form Grid */
+/* Main Input Container */
 .form-container {
     display: grid; 
-    grid-template-columns: 1fr; /* Default mobile */
+    grid-template-columns: 1fr; 
     gap: 12px; 
     background: var(--card);
     padding: 15px; 
@@ -37,7 +38,6 @@ header h1 small { display: block; font-size: 0.7rem; opacity: 0.6; }
     margin: 0 auto;
 }
 
-/* Desktop sizing */
 @media (min-width: 768px) {
     .form-container { grid-template-columns: 1fr 1fr; }
     body { padding: 20px; }
@@ -56,7 +56,7 @@ header h1 small { display: block; font-size: 0.7rem; opacity: 0.6; }
     font-weight: bold;
 }
 
-/* Manual Overrides Grid */
+/* Manual Overrides & Soft Start Sub-grids */
 .grid-sub {
     display: grid; 
     grid-template-columns: repeat(2, 1fr); 
@@ -99,7 +99,7 @@ input:checked + .slider { background-color: var(--accent); }
 input:checked + .slider:before { transform: translateX(20px); }
 .toggle-label { font-size: 0.8rem; font-weight: 500; }
 
-/* Inputs */
+/* Input Styling */
 label { display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 4px; }
 input, select { 
     width: 100%; 
@@ -109,10 +109,9 @@ input, select {
     padding: 10px; 
     border-radius: 6px; 
     font-size: 0.9rem;
-    appearance: none;
 }
 
-/* Buttons */
+/* Action Buttons */
 button { 
     cursor: pointer; font-weight: bold; border: none; border-radius: 6px; 
     padding: 16px; width: 100%; text-transform: uppercase; transition: 0.2s;
@@ -122,17 +121,17 @@ button {
 #calcBtn:hover { filter: brightness(1.1); }
 .secondary-btn { background: #334155; color: #fff; margin-top: 8px; }
 
-/* Result Cards */
+/* Dynamic Result Cards (5 Units) */
 .results { 
     display: grid; 
-    grid-template-columns: 1fr; 
+    grid-template-columns: repeat(2, 1fr); 
     gap: 10px; 
     max-width: 900px; 
     margin: 20px auto; 
 }
 
 @media (min-width: 600px) {
-    .results { grid-template-columns: 1fr 1fr 1fr; }
+    .results { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 }
 
 .card { 
@@ -140,15 +139,15 @@ button {
     text-align: center; border-bottom: 4px solid var(--accent); 
 }
 .card span { display: block; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
-.card b { font-size: 1.2rem; font-family: 'Courier New', monospace; }
+.card b { font-size: 1.1rem; font-family: 'Courier New', monospace; color: #fff; }
 
-/* Chart Area - The most critical part for mobile */
+/* Chart Area */
 .charts-container { 
     background: #fff; 
     padding: 10px; 
     border-radius: 12px; 
     position: relative;
-    height: 350px; /* Fixed height for mobile */
+    height: 350px; 
     width: 100%;
     max-width: 900px; 
     margin: 20px auto; 
@@ -158,13 +157,14 @@ button {
     .charts-container { height: 500px; padding: 20px; }
 }
 
-/* PDF/PRINT RULES */
+/* Print/PDF Layout */
 @media print {
     .no-print { display: none !important; }
-    body { background: white; color: black; padding: 0; }
+    body { background: white !important; color: black !important; padding: 0; }
     .print-header { display: block; color: black; text-align: center; margin-bottom: 30px; }
-    .results { grid-template-columns: 1fr 1fr 1fr; margin-bottom: 30px; }
-    .card { border: 1px solid #ddd; background: #f9f9f9; }
-    .card b, .card span { color: black; }
-    .charts-container { height: 400px; width: 100%; border: 1px solid #eee; }
+    .print-header hr { margin-top: 10px; border: 0; border-top: 1px solid #eee; }
+    .results { grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 30px; }
+    .card { border: 1px solid #ddd; background: #f9f9f9 !important; border-bottom: 4px solid #333; }
+    .card b, .card span { color: black !important; }
+    .charts-container { height: 450px; width: 100%; border: 1px solid #eee; }
 }
