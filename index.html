@@ -3,62 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartYourMotor | Professional Simulation</title>
+    <title>StartYourMotor | Engineering Suite</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Digital Twin v5.0</small></h1>
+        <h1>StartYourMotor</h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
     <main>
         <div class="form-container no-print">
-            <div class="section-title full-width">Motor Datasheet</div>
-            <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
-            <div class="input-group"><label>Nominal Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
-            <div class="input-group"><label>LRT (% Overide)</label><input type="number" id="overLRT" placeholder="Typical: 150"></div>
-            <div class="input-group"><label>LRC (% Overide)</label><input type="number" id="overLRC" placeholder="Typical: 650"></div>
+            <div class="input-group full-width">
+                <label>Project / Motor Reference</label>
+                <input type="text" id="projectName" placeholder="e.g. Main Intake Pump">
+            </div>
 
-            <div class="section-title full-width">Load Characteristic</div>
-            <div class="input-group"><label>Load Demand @ 100% Spd (%)</label><input type="number" id="loadDemand" value="90"></div>
-            <div class="input-group"><label>Breakaway Torque Offset (%)</label><input type="number" id="loadOffset" value="15"></div>
-            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="1.2"></div>
+            <div class="section-title full-width">Nameplate & Performance</div>
+            <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
+            <div class="input-group"><label>Nominal RPM</label><input type="number" id="rpm" value="1475"></div>
+            
+            <div class="input-group full-width">
+                <label><input type="checkbox" id="useManual"> Use Datasheet Overrides (LRT/LRC/BDT)</label>
+            </div>
+
+            <div id="manualFields" style="display:none;" class="full-width grid-sub">
+                <div class="input-group"><label>LRT (% Rated)</label><input type="number" id="overLRT" value="160"></div>
+                <div class="input-group"><label>LRC (% Rated)</label><input type="number" id="overLRC" value="650"></div>
+                <div class="input-group"><label>BDT (% Rated)</label><input type="number" id="overBDT" value="240"></div>
+            </div>
+
+            <div class="section-title full-width">Load Data</div>
+            <div class="input-group"><label>Load Demand @ 100% (%)</label><input type="number" id="loadDemand" value="90"></div>
+            <div class="input-group"><label>Breakaway Offset (%)</label><input type="number" id="loadOffset" value="15"></div>
+            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="0.8"></div>
             <div class="input-group">
-                <label>Curve Type</label>
+                <label>Load Curve</label>
                 <select id="loadCurve">
-                    <option value="quad">Centrifugal (Fan/Pump)</option>
-                    <option value="const">Constant (Conveyor/Lift)</option>
+                    <option value="quad">Centrifugal (n²)</option>
+                    <option value="const">Constant Torque</option>
                 </select>
             </div>
 
             <div class="section-title full-width">Simulation Control</div>
             <div class="input-group">
-                <label>Starting Method</label>
+                <label>Method</label>
                 <select id="method">
                     <option value="dol">Direct On Line</option>
-                    <option value="soft">Soft Starter (Current Limit)</option>
+                    <option value="soft">Soft Starter</option>
                 </select>
             </div>
-            <div class="input-group full-width">
-                <label>Terminal Voltage: <span id="vDisp">100</span>%</label>
+            <div class="input-group">
+                <label>Voltage: <span id="vDisp">100</span>%</label>
                 <input type="range" id="vSupp" min="70" max="100" value="100">
             </div>
 
-            <button id="calcBtn">ANALYZE STARTING DYNAMICS</button>
+            <button id="calcBtn" class="full-width">RUN SIMULATION</button>
         </div>
 
         <div class="results">
-            <div class="card"><span>Start Time</span><b id="resTime">--</b></div>
-            <div class="card"><span>Starting Energy</span><b id="resEnergy">--</b></div>
-            <div class="card"><span>Peak Current</span><b id="resPeakI">--</b></div>
+            <div class="card"><span>START TIME</span><b id="resTime">--</b></div>
+            <div class="card"><span>ENERGY (kJ)</span><b id="resEnergy">--</b></div>
         </div>
 
         <div class="charts-container">
             <canvas id="masterChart"></canvas>
-            <p class="source-tag">Physics Engine: Modified Kloss Equation & Euler Integration Method.</p>
+            <p class="source-tag">Algorithm: Modified Kloss Model & Euler Integration</p>
         </div>
     </main>
     <script src="app.js"></script>
