@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorStart Pro</title>
+    <title>MotorStart Pro v2.0</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2c3e50">
@@ -11,8 +11,7 @@
 </head>
 <body>
     <header>
-        <h1>MotorStart Pro</h1>
-        <span id="status-badge">Online</span>
+        <h1>MotorStart Pro <small>Engineering Edition</small></h1>
     </header>
 
     <main>
@@ -22,53 +21,52 @@
                 <input type="number" id="power" value="15">
             </div>
             <div class="input-group">
-                <label>Voltage (V)</label>
-                <input type="number" id="voltage" value="400">
+                <label>Motor Design (IEC/NEMA)</label>
+                <select id="motorDesign">
+                    <option value="N">Design N (Standard)</option>
+                    <option value="H">Design H (High Torque)</option>
+                </select>
             </div>
             <div class="input-group">
-                <label>Inertia J (kg·m²)</label>
-                <input type="number" id="inertia" value="0.5">
+                <label>Total Inertia J (kg·m²)</label>
+                <input type="number" id="inertia" value="0.8" step="0.1">
+            </div>
+            <div class="input-group">
+                <label>Load Torque Type</label>
+                <select id="loadType">
+                    <option value="fan">Centrifugal (Fan/Pump)</option>
+                    <option value="const">Constant (Conveyor)</option>
+                </select>
             </div>
             <div class="input-group">
                 <label>Starting Method</label>
                 <select id="method">
                     <option value="dol">Direct On Line (DOL)</option>
                     <option value="stardelta">Star-Delta</option>
-                    <option value="soft">Soft Starter (3x Ir)</option>
+                    <option value="soft">Soft Starter</option>
                 </select>
             </div>
-            <button id="calcBtn">Calculate & Plot</button>
+            <div class="input-group" id="limitGroup" style="display:none;">
+                <label>Soft Start Limit (% Ir)</label>
+                <input type="number" id="currentLimit" value="300">
+            </div>
+            <button id="calcBtn">Run Simulation</button>
         </section>
 
+        <div id="warningBox" class="warning" style="display:none;">
+            ⚠️ WARNING: Starting time exceeds 10s. Check motor thermal limits!
+        </div>
+
         <section class="results">
-            <div class="card">Starting Current: <b id="resI">--</b> A</div>
-            <div class="card">Est. Start Time: <b id="resTime">--</b> s</div>
+            <div class="card">Starting Current: <b id="resI">--</b></div>
+            <div class="card">Start Time: <b id="resTime">--</b></div>
         </section>
-<div class="input-group">
-    <label>Standard</label>
-    <select id="motorDesign">
-        <option value="N">IEC Design N / NEMA B</option>
-        <option value="H">IEC Design H / NEMA C</option>
-    </select>
-</div>
-<div class="input-group">
-    <label>Load Type</label>
-    <select id="loadType">
-        <option value="fan">Fan/Pump (n²)</option>
-        <option value="conveyor">Conveyor (Constant)</option>
-    </select>
-</div>
-<div class="input-group">
-    <label>Soft Start Limit (A)</label>
-    <input type="number" id="currentLimit" value="350" placeholder="% of Rated">
-</div>
+
         <section class="charts">
             <canvas id="torqueChart"></canvas>
-            <canvas id="currentChart"></canvas>
         </section>
     </main>
 
     <script src="app.js"></script>
 </body>
-
 </html>
