@@ -1,97 +1,105 @@
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); });
-}
+// Register SW
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); }); }
 
-const DESIGNS = {
-    N: { lrt: 1.5, bdt: 2.4, pullup: 1.1, inrush: 6.0 },
-    H: { lrt: 2.3, bdt: 2.1, pullup: 1.6, inrush: 5.5 }
-};
+const ctx = document.getElementById('masterChart').getContext('2d');
+let masterChart;
 
-const vSlider = document.getElementById('voltageDrop');
-const vValDisplay = document.getElementById('vVal');
-const ctxT = document.getElementById('torqueChart').getContext('2d');
-let torqueChart;
-
-vSlider.addEventListener('input', (e) => { vValDisplay.innerText = e.target.value; });
-document.getElementById('method').addEventListener('change', (e) => {
-    document.getElementById('limitGroup').style.display = e.target.value === 'soft' ? 'block' : 'none';
+document.getElementById('vSupp').addEventListener('input', (e) => { document.getElementById('vDisp').innerText = e.target.value; });
+document.getElementById('printBtn').addEventListener('click', () => { 
+    document.getElementById('pdfProject').innerText = "Project: " + (document.getElementById('projName').value || "Unnamed");
+    window.print(); 
 });
 
-document.getElementById('printBtn').addEventListener('click', () => {
-    const proj = document.getElementById('projectName').value || "Standard Motor Simulation";
-    document.getElementById('pdfProjectName').innerText = "Project: " + proj;
-    window.print();
-});
+document.getElementById('calcBtn').addEventListener('click', runSimulation);
 
-document.getElementById('calcBtn').addEventListener('click', () => {
-    const P = parseFloat(document.getElementById('power').value);
-    const J = parseFloat(document.getElementById('inertia').value);
-    const design = DESIGNS[document.getElementById('motorDesign').value];
+function runSimulation() {
+    // Inputs
+    const P = parseFloat(document.getElementById('pKw').value);
+    const RPM = parseFloat(document.getElementById('rpm').value);
+    const J_total = parseFloat(document.getElementById('jMot').value) + parseFloat(document.getElementById('jLoad').value);
+    const effFactor = parseFloat(document.getElementById('efficiency').value);
+    const necInrush = parseFloat(document.getElementById('necCode').value);
     const method = document.getElementById('method').value;
-    const limit = parseFloat(document.getElementById('currentLimit').value) / 100;
-    const vFactor = Math.pow(parseFloat(vSlider.value) / 100, 2);
-
-    const Trated = (P * 9550) / 1450;
-    let speedPoints = [], motorT = [], loadT = [];
-    let totalTime = 0;
-    const steps = 30;
+    const vSupp = parseFloat(document.getElementById('vSupp').value) / 100;
+    
+    // Calculated Rated Values
+    const T_rated = (P * 9550) / RPM;
+    const I_lrc_mult = necInrush * effFactor; // Combined effect of NEC code and Efficiency
+    
+    let speedPoints = [], motorT = [], loadT = [], currentP = [];
+    let time = 0;
+    const steps = 50;
 
     for (let i = 0; i <= steps; i++) {
-        let n = i / steps;
+        let n = i / steps; // Normalised speed
         speedPoints.push(Math.round(n * 100));
 
-        let baseT = (n < 0.7) ? design.lrt + (design.pullup - design.lrt) * (n / 0.7) :
-                    (n < 0.9) ? design.pullup + (design.bdt - design.pullup) * ((n - 0.7) / 0.2) :
-                    design.bdt - (design.bdt - 1.0) * ((n - 0.9) / 0.1);
+        // 1. Realistic Torque Curve using Kloss-style interpolation
+        // Standard NEMA B curve shape
+        let baseT_perc = 0;
+        if (n < 0.1) baseT_perc = 1.5; // LRT
+        else if (n < 0.8) baseT_perc = 1.5 + (0.5 * (n / 0.8)); // Rise to BDT
+        else if (n < 0.95) baseT_perc = 2.0 + (0.4 * ((n-0.8)/0.15)); // Peak BDT
+        else baseT_perc = 2.4 - (1.4 * ((n-0.95)/0.05)); // Drop to Rated
 
-        let reduction = (method === 'soft') ? Math.pow(limit / design.inrush, 2) : 
-                        (method === 'stardelta' && n < 0.8) ? 0.33 : 1.0;
+        // Apply Voltage Reduction (T proportional to V^2)
+        let v_applied = vSupp;
+        if (method === 'stardelta' && n < 0.8) v_applied = vSupp * 0.577;
         
-        let Tm = baseT * Trated * reduction * vFactor;
-        let Tl = (document.getElementById('loadType').value === 'fan') ? Trated * Math.pow(n, 2) : Trated * 0.8; 
+        let Tm = baseT_perc * T_rated * Math.pow(v_applied, 2);
         
+        // 2. Load Torque
+        let Tl = (document.getElementById('loadCurve').value === 'quad') 
+                 ? T_rated * Math.pow(n, 2) 
+                 : T_rated * 0.8;
+
         motorT.push(Tm.toFixed(1));
         loadT.push(Tl.toFixed(1));
 
+        // 3. Current (%) - Linear with Voltage
+        let Im = (n < 0.85) ? I_lrc_mult * v_applied : (I_lrc_mult * v_applied) * (1 - (n - 0.85) / 0.15 * 0.8);
+        currentP.push((Im * 100).toFixed(0));
+
+        // 4. Time Integration
         if (i < steps) {
-            let Ta = Tm - Tl;
-            if (Ta > 0) {
-                let deltaW = (1 / steps) * (1450 * 2 * Math.PI / 60);
-                totalTime += (J * deltaW) / Ta;
-            } else { totalTime = Infinity; }
+            let T_accel = Tm - Tl;
+            if (T_accel > 0) {
+                let deltaW = (1 / steps) * (RPM * 2 * Math.PI / 60);
+                time += (J_total * deltaW) / T_accel;
+            } else {
+                time = Infinity;
+            }
         }
     }
 
-    const irBase = (method === 'stardelta' ? 0.33 : 1) * (method === 'soft' ? limit / design.inrush : 1);
-    document.getElementById('resI').innerText = (design.inrush * irBase * (parseFloat(vSlider.value)/100) * 100).toFixed(0) + "% Ir";
-    
-    const timeDisplay = document.getElementById('resTime');
-    timeDisplay.innerText = (totalTime === Infinity) ? "STALLED" : totalTime.toFixed(2) + "s";
-    timeDisplay.style.color = (totalTime === Infinity) ? "#f43f5e" : "#38bdf8";
+    // Update UI
+    document.getElementById('calcLRT').innerText = (1.5 * Math.pow(vSupp, 2) * 100).toFixed(0) + "%";
+    document.getElementById('calcLRC').innerText = (I_lrc_mult * vSupp * 100).toFixed(0) + "%";
+    document.getElementById('resTime').innerText = (time === Infinity) ? "STALLED" : time.toFixed(2) + "s";
+    document.getElementById('stallWarn').style.display = (time === Infinity || time > 15) ? 'block' : 'none';
 
-    document.getElementById('warningBox').style.display = (totalTime > 12 || totalTime === Infinity) ? 'block' : 'none';
-    
-    renderChart(speedPoints, motorT, loadT);
-});
+    drawChart(speedPoints, motorT, loadT, currentP);
+}
 
-function renderChart(labels, motor, load) {
-    if (torqueChart) torqueChart.destroy();
-    torqueChart = new Chart(ctxT, {
+function drawChart(labels, motor, load, current) {
+    if (masterChart) masterChart.destroy();
+    masterChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
-                { label: 'Motor Torque (Nm)', data: motor, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.3 },
-                { label: 'Load Torque (Nm)', data: load, borderColor: '#64748b', borderDash: [5, 5], pointRadius: 0, tension: 0.3 }
+                { label: 'Motor Torque (Nm)', data: motor, borderColor: '#0ea5e9', yAxisID: 'y' },
+                { label: 'Load Torque (Nm)', data: load, borderColor: '#64748b', borderDash: [5, 5], yAxisID: 'y' },
+                { label: 'Current (%)', data: current, borderColor: '#f59e0b', yAxisID: 'y1' }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#334155' } } },
-            scales: { 
-                x: { ticks: { color: '#64748b' } },
-                y: { ticks: { color: '#64748b' } }
+            scales: {
+                y: { title: { display: true, text: 'Torque (Nm)' }, position: 'left' },
+                y1: { title: { display: true, text: 'Current (%)' }, position: 'right', grid: { drawOnChartArea: false } },
+                x: { title: { display: true, text: 'Speed (%)' } }
             }
         }
     });
