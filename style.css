@@ -7,58 +7,72 @@
     --danger: #f43f5e;
 }
 
+* { box-sizing: border-box; }
+
 body { 
     font-family: 'Inter', sans-serif; 
     background: var(--bg); color: var(--text); 
-    margin: 0; padding: 20px;
+    margin: 0; padding: 15px; overflow-x: hidden;
 }
 
-header { text-align: center; margin-bottom: 30px; }
-header h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
-.author { font-size: 0.75rem; opacity: 0.6; margin: 0; text-transform: uppercase; }
+header { text-align: center; margin-bottom: 20px; }
+header h1 { margin: 0; font-size: 1.5rem; color: var(--accent); }
+.author { font-size: 0.7rem; opacity: 0.6; margin: 0; }
 
+/* Mobile-First: 1 column by default */
 .form-container { 
-    display: grid; grid-template-columns: repeat(2, 1fr); 
-    gap: 20px; background: var(--card); padding: 24px; 
-    border-radius: 12px; border: 1px solid var(--border);
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 12px; 
+    background: var(--card); 
+    padding: 15px; 
+    border-radius: 12px; 
+    border: 1px solid var(--border);
+}
+
+/* Tablet/Desktop: 2 columns */
+@media (min-width: 600px) {
+    .form-container { grid-template-columns: 1fr 1fr; }
+    .full-width { grid-column: 1 / -1; }
 }
 
 .input-group { display: flex; flex-direction: column; }
-.full-width { grid-column: 1 / -1; }
-label { font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: #94a3b8; }
+label { font-size: 0.75rem; margin-bottom: 5px; color: #94a3b8; }
 
 input, select { 
     background: #0f172a; border: 1px solid var(--border); 
-    color: white; padding: 12px; border-radius: 6px;
+    color: white; padding: 12px; border-radius: 6px; width: 100%;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
 }
 
 button { 
-    grid-column: 1 / -1; background: var(--accent); color: #0f172a; 
-    font-weight: 800; border: none; padding: 16px; border-radius: 6px;
-    cursor: pointer; margin-top: 10px;
+    width: 100%; background: var(--accent); color: #0f172a; 
+    font-weight: 800; border: none; padding: 15px; border-radius: 6px;
+    cursor: pointer; margin-top: 5px;
 }
 
-.secondary-btn { background: #334155; color: white; margin-top: 5px; }
+.secondary-btn { background: #334155; color: white; }
 
-.results { display: flex; gap: 15px; margin: 25px 0; }
-.card { flex: 1; background: var(--card); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent); }
-.card span { display: block; font-size: 0.7rem; color: #94a3b8; }
-.card b { font-size: 1.4rem; }
+.results { display: flex; gap: 10px; margin: 15px 0; }
+.card { flex: 1; background: var(--card); padding: 15px; border-radius: 12px; border-left: 4px solid var(--accent); }
+.card b { font-size: 1.1rem; display: block; }
+.card span { font-size: 0.65rem; color: #94a3b8; }
 
-.warning { background: #450a0a; color: #fecaca; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+.warning { background: #450a0a; color: #fecaca; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; text-align: center; }
 
-.charts-container { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+/* Chart is white for readability when printed */
+.charts-container { 
+    background: white; padding: 10px; border-radius: 12px; 
+    width: 100%; min-height: 300px; position: relative;
+}
 
 .print-only { display: none; }
 
-/* PRINT SETTINGS */
 @media print {
     .no-print { display: none !important; }
-    .print-only { display: block; }
+    .print-only { display: block; color: black; }
     body { background: white; color: black; padding: 0; }
-    .card { border: 1px solid #ddd; background: #fff !important; color: black !important; }
-    .card b, .card span { color: black !important; }
+    .card { border: 1px solid #ccc; color: black !important; background: transparent !important; }
+    .card span, .card b { color: black !important; }
     .charts-container { border: none; }
-    .report-header h1 { color: #0f172a; margin-bottom: 0; }
-    .report-header p { font-size: 0.8rem; color: #666; }
 }
