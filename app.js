@@ -1,4 +1,3 @@
-// Register Service Worker for Offline PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js'); });
 }
@@ -17,6 +16,11 @@ let torqueChart;
 
 vSlider.addEventListener('input', (e) => { vValDisplay.innerText = e.target.value; });
 methodEl.addEventListener('change', () => { limitGroup.style.display = methodEl.value === 'soft' ? 'block' : 'none'; });
+
+// Print Function
+document.getElementById('printBtn').addEventListener('click', () => {
+    window.print();
+});
 
 document.getElementById('calcBtn').addEventListener('click', () => {
     const P = parseFloat(document.getElementById('power').value);
@@ -58,7 +62,6 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         }
     }
 
-    // UI Updates
     const irBase = (method === 'stardelta' ? 0.33 : 1) * (method === 'soft' ? limit / design.inrush : 1);
     document.getElementById('resI').innerText = (design.inrush * irBase * (parseFloat(vSlider.value)/100) * 100).toFixed(0) + "% Ir";
     
@@ -93,6 +96,7 @@ function renderChart(labels, motor, load) {
             ]
         },
         options: {
+            animation: false, // Set to false for cleaner PDF rendering
             plugins: { legend: { labels: { color: '#94a3b8' } } },
             scales: { 
                 x: { grid: { color: '#334155' }, ticks: { color: '#64748b' } },
