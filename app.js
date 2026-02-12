@@ -9,7 +9,8 @@ document.getElementById('method').addEventListener('change', e => {
 });
 
 document.getElementById('calcBtn').addEventListener('click', () => {
-    // 1. Mandatory Input Handling with Strict Physics Defaults
+    // 1. Core Inputs
+    const V_abs = parseFloat(document.getElementById('sysVolts').value) || 400;
     const P = parseFloat(document.getElementById('pKw').value) || 30;
     const RPM = parseFloat(document.getElementById('rpm').value) || 1475;
     const Ir = parseFloat(document.getElementById('iRated').value) || 55;
@@ -22,32 +23,38 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     const LRC = (isManual ? parseFloat(document.getElementById('overLRC').value) || 650 : 650) / 100;
     const BDT = (isManual ? parseFloat(document.getElementById('overBDT').value) || 230 : 230) / 100;
     
-    // Thermal Limit Calculation (I2t)
     const limitA2s = Math.pow(LRC * Ir, 2) * hotStallTime;
-
     const loadDemand = (parseFloat(document.getElementById('loadDemand').value) || 95) / 100;
     const loadOffset = (parseFloat(document.getElementById('loadOffset').value) || 20) / 100;
-    
     const Trated = (P * 9550) / RPM;
     const s_nom = (1500 - RPM) / 1500;
     const sb = 0.22; 
 
     let labels = [], motorT = [], loadT = [], currentI = [], voltageV = [];
+    let dolT_shadow = [], dolI_shadow = []; // Visual comparison curves
     let totalTime = 0, totalA2s = 0, stalledAt = null;
 
-    // Simulation Engine
     for (let i = 0; i <= 100; i++) {
         let n = i / 100; 
         let s = Math.max(s_nom, 1 - n);
         labels.push(i);
 
+        // Standard DOL Shadow Calculation (for comparison)
+        let Tm_dol = ((2 * BDT) / ((s / sb) + (sb / s))) * Math.pow(vNet, 2);
+        let Im_dol = (LRC * vNet);
+        if (n > 0.85) {
+            let decay = 1 / (1 + Math.pow((n - 0.85) / 0.15, 4) * 5);
+            Im_dol = Math.max(loadDemand, Im_dol * decay);
+        }
+        dolT_shadow.push((Tm_dol * 100).toFixed(1));
+        dolI_shadow.push((Im_dol * 100).toFixed(0));
+
+        // Active Calculation (Current Method)
         let v_applied = vNet;
         if (document.getElementById('method').value === 'soft') {
             const iInit = (parseFloat(document.getElementById('softInit').value) || 200) / 100;
             const iLimit = (parseFloat(document.getElementById('softLimit').value) || 350) / 100;
             const rampT = parseFloat(document.getElementById('softRamp').value) || 5;
-            
-            // Linear target current ramp
             let i_target = iInit + (totalTime / Math.max(0.1, rampT)) * (iLimit - iInit);
             i_target = Math.min(i_target, iLimit); 
             v_applied = Math.min(vNet, i_target / LRC);
@@ -75,7 +82,6 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         loadT.push((Tl * 100).toFixed(1));
         currentI.push((Im * 100).toFixed(0));
 
-        // Time integration
         if (i < 100 && n < (1 - s_nom)) {
             let Ta_pu = Tm - Tl;
             if (Ta_pu > 0.005 && !stalledAt) {
@@ -88,20 +94,11 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         }
     }
 
-    // Output Mapping
-    const timeRes = document.getElementById('resTime');
-    if (stalledAt !== null) {
-        timeRes.innerText = "STALL";
-        timeRes.style.color = "#f43f5e";
-    } else {
-        timeRes.innerText = totalTime.toFixed(2) + "s";
-        timeRes.style.color = "#fff";
-    }
-    
-    document.getElementById('resThermal').innerText = Math.round(totalA2s).toLocaleString();
+    // Results with Unit conversion
+    document.getElementById('resTime').innerText = stalledAt ? "STALL" : totalTime.toFixed(2) + "s";
+    document.getElementById('resThermal').innerText = Math.round(totalA2s).toLocaleString() + " A2s";
     let capUsed = (totalA2s / limitA2s) * 100;
     document.getElementById('resCap').innerText = capUsed.toFixed(1) + "%";
-    document.getElementById('resCap').style.color = capUsed > 100 ? "#f43f5e" : "#fff";
 
     if (masterChart) masterChart.destroy();
     masterChart = new Chart(ctx, {
@@ -109,17 +106,18 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Torque (%)', data: motorT, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0 },
-                { label: 'Load Curve', data: loadT, borderColor: '#f43f5e', borderDash: [5,5], pointRadius: 0 },
-                { label: 'Current (%)', data: currentI, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, pointRadius: 0, yAxisID: 'y1' },
-                { label: 'Voltage (%)', data: voltageV, borderColor: '#10b981', borderDash: [2,2], pointRadius: 0 }
+                { label: 'Active Torque (%)', data: motorT, borderColor: '#38bdf8', borderWidth: 3, pointRadius: 0 },
+                { label: 'DOL Shadow Torque (%)', data: dolT_shadow, borderColor: '#38bdf8', borderDash: [5,5], borderWidth: 1, pointRadius: 0 },
+                { label: 'Load Curve', data: loadT, borderColor: '#f43f5e', borderDash: [2,2], pointRadius: 0 },
+                { label: 'Active Current (%)', data: currentI, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, pointRadius: 0, yAxisID: 'y1' },
+                { label: 'DOL Shadow Current (%)', data: dolI_shadow, borderColor: '#f59e0b', borderDash: [5,5], borderWidth: 1, pointRadius: 0, yAxisID: 'y1' }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             scales: {
-                x: { title: { display: true, text: 'Speed (% RPM)' } },
-                y: { title: { display: true, text: 'Torque / Voltage (%)' }, min: 0, max: 300 },
+                x: { title: { display: true, text: 'Speed (%)' } },
+                y: { title: { display: true, text: 'Torque (%)' }, min: 0, max: 300 },
                 y1: { title: { display: true, text: 'Current (%)' }, position: 'right', min: 0, max: 800, grid: { drawOnChartArea: false } }
             }
         }
