@@ -27,7 +27,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     const s_nom = (1500 - RPM) / 1500;
     const sb = 0.22; 
 
-    let labels = [], motorT = [], loadT = [], currentI = [];
+    let labels = [], motorT = [], loadT = [], currentI = [], voltageV = [];
     let totalTime = 0, totalA2s = 0, stalledAt = null;
 
     for (let i = 0; i <= 100; i++) {
@@ -37,29 +37,23 @@ document.getElementById('calcBtn').addEventListener('click', () => {
 
         let v_applied = vNet;
         if (document.getElementById('method').value === 'soft') {
-            const iInit = (parseFloat(document.getElementById('softInit')?.value) || 200) / 100;
+            const iInit = parseFloat(document.getElementById('softInit').value) / 100;
             const iLimit = parseFloat(document.getElementById('softLimit').value) / 100;
             const rampT = parseFloat(document.getElementById('softRamp').value);
             
-            // Pedestal + Linear Ramp up to the Limit
+            // Linear target current ramp from Pedestal to Limit
             let i_target = iInit + (totalTime / Math.max(0.1, rampT)) * (iLimit - iInit);
             i_target = Math.min(i_target, iLimit); 
-            
-            // Required voltage to push that target current through motor impedance at current slip
             v_applied = Math.min(vNet, i_target / LRC);
         }
+        voltageV.push((v_applied * 100).toFixed(0));
 
-        // Torque calculation with voltage drop
         let k_denom = (s / sb) + (sb / s);
         let Tm = ((2 * BDT) / k_denom) * Math.pow(v_applied, 2);
         if (n < 0.15) Tm = (LRT * Math.pow(v_applied, 2)) + (Tm - (LRT * Math.pow(v_applied, 2))) * Math.sin((n/0.15) * (Math.PI/2));
 
-        // Current calculation (Constant plateau logic)
         let Im = (LRC * v_applied);
-        if (n > 0.85) {
-            let decay = 1 / (1 + Math.pow((n - 0.85) / 0.15, 4) * 5);
-            Im = Math.max(loadDemand, Im * decay);
-        }
+        if (n > 0.85) Im = Math.max(loadDemand, Im * (1 / (1 + Math.pow((n - 0.85) / 0.15, 4) * 5)));
         if (n >= 0.99) Im = loadDemand;
 
         let Tl = (document.getElementById('loadCurve').value === 'quad') 
@@ -70,6 +64,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         loadT.push((Tl * 100).toFixed(1));
         currentI.push((Im * 100).toFixed(0));
 
+        // Integration Logic
         if (i < 100 && n < (1 - s_nom)) {
             let Ta_pu = Tm - Tl;
             if (Ta_pu > 0.001 && !stalledAt) {
@@ -83,45 +78,37 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     }
 
     const timeRes = document.getElementById('resTime');
+    const timeCard = document.getElementById('timeCard');
     if (stalledAt) {
         timeRes.innerText = "STALLED";
-        timeRes.style.color = "#f43f5e";
+        timeCard.style.borderBottomColor = "#f43f5e";
     } else {
         timeRes.innerText = totalTime.toFixed(2) + "s";
-        timeRes.style.color = "#fff";
+        timeCard.style.borderBottomColor = "#38bdf8";
     }
     
     document.getElementById('resThermal').innerText = Math.round(totalA2s).toLocaleString();
     document.getElementById('resCap').innerText = ((totalA2s / limitA2s) * 100).toFixed(1) + "%";
 
-    updateChart(labels, motorT, loadT, currentI, vNet * 100, stalledAt);
-});
-
-function updateChart(l, m, ld, c, vFinal, stallIdx) {
     if (masterChart) masterChart.destroy();
-    
     masterChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: l,
+            labels: labels,
             datasets: [
-                { label: `Motor Torque (at ${vFinal}% System Voltage)`, data: m, borderColor: '#38bdf8', borderWidth: 2.5, pointRadius: 0, tension: 0.3, yAxisID: 'y' },
-                { label: 'Load Resistance Torque', data: ld, borderColor: '#f43f5e', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, yAxisID: 'y' },
-                { label: 'Current Profile (%)', data: c, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', fill: true, borderWidth: 2, pointRadius: 0, yAxisID: 'y1' }
+                { label: `Motor Torque @ ${vNet * 100}% V_sys`, data: motorT, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.3 },
+                { label: 'Load Torque', data: loadT, borderColor: '#f43f5e', borderDash: [5,5], pointRadius: 0 },
+                { label: 'Current (%)', data: currentI, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, pointRadius: 0, yAxisID: 'y1' },
+                { label: 'Starter Voltage (%)', data: voltageV, borderColor: '#10b981', borderDash: [2,2], pointRadius: 0 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             scales: {
-                x: { title: { display: true, text: 'Speed (Percentage of Synchronous RPM)', color: '#64748b' }, grid: { color: '#f1f5f9' } },
-                y: { title: { display: true, text: 'Torque (% of Rated)', color: '#64748b' }, min: 0, max: 300, grid: { color: '#f1f5f9' } },
-                y1: { title: { display: true, text: 'Current (% of Rated)', color: '#64748b' }, position: 'right', min: 0, max: 800, grid: { drawOnChartArea: false } }
-            },
-            plugins: {
-                legend: { position: 'top', labels: { boxWidth: 12, padding: 20, font: { size: 12 } } },
-                tooltip: { mode: 'index', intersect: false }
+                x: { title: { display: true, text: 'Speed (% RPM)' } },
+                y: { title: { display: true, text: 'Torque/Voltage (%)' }, min: 0, max: 300 },
+                y1: { title: { display: true, text: 'Current (%)' }, position: 'right', min: 0, max: 800, grid: { drawOnChartArea: false } }
             }
         }
     });
-}
+});
