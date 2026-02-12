@@ -9,12 +9,12 @@ document.getElementById('method').addEventListener('change', e => {
 });
 
 document.getElementById('calcBtn').addEventListener('click', () => {
-    // 1. Inputs with fallbacks (no longer hard-written values)
+    // 1. Mandatory Input Handling with Strict Physics Defaults
     const P = parseFloat(document.getElementById('pKw').value) || 30;
     const RPM = parseFloat(document.getElementById('rpm').value) || 1475;
     const Ir = parseFloat(document.getElementById('iRated').value) || 55;
     const hotStallTime = parseFloat(document.getElementById('stallTime').value) || 15;
-    const J_tot = (parseFloat(document.getElementById('jMotor').value) || 0) + (parseFloat(document.getElementById('jLoad').value) || 0);
+    const J_tot = (parseFloat(document.getElementById('jMotor').value) || 0) + (parseFloat(document.getElementById('jLoad').value) || 0.1);
     const vNet = (parseFloat(document.getElementById('vSuppVal').value) || 100) / 100;
 
     const isManual = document.getElementById('useManual').checked;
@@ -22,7 +22,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     const LRC = (isManual ? parseFloat(document.getElementById('overLRC').value) || 650 : 650) / 100;
     const BDT = (isManual ? parseFloat(document.getElementById('overBDT').value) || 230 : 230) / 100;
     
-    // 2. Real-life Thermal Limit Calculation: Limit = LRC^2 * StallTime
+    // Thermal Limit Calculation (I2t)
     const limitA2s = Math.pow(LRC * Ir, 2) * hotStallTime;
 
     const loadDemand = (parseFloat(document.getElementById('loadDemand').value) || 95) / 100;
@@ -35,6 +35,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     let labels = [], motorT = [], loadT = [], currentI = [], voltageV = [];
     let totalTime = 0, totalA2s = 0, stalledAt = null;
 
+    // Simulation Engine
     for (let i = 0; i <= 100; i++) {
         let n = i / 100; 
         let s = Math.max(s_nom, 1 - n);
@@ -45,6 +46,8 @@ document.getElementById('calcBtn').addEventListener('click', () => {
             const iInit = (parseFloat(document.getElementById('softInit').value) || 200) / 100;
             const iLimit = (parseFloat(document.getElementById('softLimit').value) || 350) / 100;
             const rampT = parseFloat(document.getElementById('softRamp').value) || 5;
+            
+            // Linear target current ramp
             let i_target = iInit + (totalTime / Math.max(0.1, rampT)) * (iLimit - iInit);
             i_target = Math.min(i_target, iLimit); 
             v_applied = Math.min(vNet, i_target / LRC);
@@ -72,9 +75,10 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         loadT.push((Tl * 100).toFixed(1));
         currentI.push((Im * 100).toFixed(0));
 
+        // Time integration
         if (i < 100 && n < (1 - s_nom)) {
             let Ta_pu = Tm - Tl;
-            if (Ta_pu > 0.001 && !stalledAt) {
+            if (Ta_pu > 0.005 && !stalledAt) {
                 let dt = (J_tot * (RPM * 2 * Math.PI / 60 / 100)) / (Ta_pu * Trated);
                 totalTime += dt;
                 totalA2s += Math.pow(Im * Ir, 2) * dt;
@@ -84,6 +88,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         }
     }
 
+    // Output Mapping
     const timeRes = document.getElementById('resTime');
     if (stalledAt !== null) {
         timeRes.innerText = "STALL";
@@ -94,7 +99,9 @@ document.getElementById('calcBtn').addEventListener('click', () => {
     }
     
     document.getElementById('resThermal').innerText = Math.round(totalA2s).toLocaleString();
-    document.getElementById('resCap').innerText = ((totalA2s / limitA2s) * 100).toFixed(1) + "%";
+    let capUsed = (totalA2s / limitA2s) * 100;
+    document.getElementById('resCap').innerText = capUsed.toFixed(1) + "%";
+    document.getElementById('resCap').style.color = capUsed > 100 ? "#f43f5e" : "#fff";
 
     if (masterChart) masterChart.destroy();
     masterChart = new Chart(ctx, {
@@ -102,10 +109,10 @@ document.getElementById('calcBtn').addEventListener('click', () => {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Torque (%)', data: motorT, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.2 },
+                { label: 'Torque (%)', data: motorT, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0 },
                 { label: 'Load Curve', data: loadT, borderColor: '#f43f5e', borderDash: [5,5], pointRadius: 0 },
                 { label: 'Current (%)', data: currentI, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, pointRadius: 0, yAxisID: 'y1' },
-                { label: 'Terminal V (%)', data: voltageV, borderColor: '#10b981', borderDash: [2,2], pointRadius: 0 }
+                { label: 'Voltage (%)', data: voltageV, borderColor: '#10b981', borderDash: [2,2], pointRadius: 0 }
             ]
         },
         options: {
