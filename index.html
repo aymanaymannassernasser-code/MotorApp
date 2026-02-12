@@ -44,7 +44,24 @@
             <div class="card">Starting Current: <b id="resI">--</b> A</div>
             <div class="card">Est. Start Time: <b id="resTime">--</b> s</div>
         </section>
-
+<div class="input-group">
+    <label>Standard</label>
+    <select id="motorDesign">
+        <option value="N">IEC Design N / NEMA B</option>
+        <option value="H">IEC Design H / NEMA C</option>
+    </select>
+</div>
+<div class="input-group">
+    <label>Load Type</label>
+    <select id="loadType">
+        <option value="fan">Fan/Pump (n²)</option>
+        <option value="conveyor">Conveyor (Constant)</option>
+    </select>
+</div>
+<div class="input-group">
+    <label>Soft Start Limit (A)</label>
+    <input type="number" id="currentLimit" value="350" placeholder="% of Rated">
+</div>
         <section class="charts">
             <canvas id="torqueChart"></canvas>
             <canvas id="currentChart"></canvas>
@@ -53,4 +70,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>
