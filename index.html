@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartYourMotor Pro v7.7</title>
+    <title>StartYourMotor Pro v7.8</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Digital Twin v7.7 (Industrial Edition)</small></h1>
+        <h1>StartYourMotor <small>Digital Twin v7.8</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
+
+    <div class="print-header">
+        <h2>Motor Starting Analysis Report</h2>
+        <p id="printRef"></p>
+        <hr>
+    </div>
 
     <main>
         <div class="form-container no-print">
@@ -21,19 +27,20 @@
             </div>
 
             <div class="section-title full-width">System & Nameplate</div>
-            <div class="input-group"><label>System Voltage (V)</label><input type="number" id="sysVolts" placeholder="400, 3300, 6600, 11000"></div>
+            <div class="input-group"><label>System Voltage (V)</label><input type="number" id="sysVolts" placeholder="400, 3300, 11000"></div>
             <div class="input-group"><label>Power (kW)</label><input type="number" id="pKw" placeholder="e.g. 150"></div>
-            <div class="input-group"><label>Rated Speed (RPM)</label><input type="number" id="rpm" placeholder="e.g. 1475"></div>
+            <div class="input-group"><label>Speed (RPM)</label><input type="number" id="rpm" placeholder="e.g. 1475"></div>
             <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" placeholder="FLA"></div>
             
-            <div class="section-title full-width">Thermal & Design Limits</div>
+            <div class="section-title full-width">Thermal & Design</div>
             <div class="input-group"><label>Hot Stall Time (s)</label><input type="number" id="stallTime" placeholder="Typically 15"></div>
+            
             <div class="toggle-container full-width">
                 <label class="toggle-switch">
                     <input type="checkbox" id="useManual">
                     <span class="slider"></span>
                 </label>
-                <span class="toggle-label">Override Design Parameters (LRT/LRC/BDT)</span>
+                <span class="toggle-label">Manual Design Override (LRT/LRC/BDT)</span>
             </div>
 
             <div id="manualFields" class="full-width grid-sub" style="display:none;">
@@ -75,6 +82,7 @@
             </div>
 
             <button id="calcBtn" class="full-width">EXECUTE DYNAMIC ANALYSIS</button>
+            <button id="pdfBtn" class="secondary-btn full-width">SAVE AS PDF REPORT</button>
         </div>
 
         <div class="results">
