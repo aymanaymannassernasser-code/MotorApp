@@ -3,105 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartYourMotor Pro</title>
+    <title>StartYourMotor | Professional Simulation</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Pro v3.0</small></h1>
+        <h1>StartYourMotor <small>Digital Twin v5.0</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
-    <div class="print-only report-header">
-        <h1>Motor Simulation & Protection Report</h1>
-        <p id="pdfProject">Project: --</p>
-        <hr>
-    </div>
-
     <main>
         <div class="form-container no-print">
-            <div class="section-title full-width">Nameplate & Load Data</div>
-            <div class="input-group full-width">
-                <label>Project Reference</label>
-                <input type="text" id="projName" placeholder="e.g. Compressor 101">
-            </div>
-            <div class="input-group">
-                <label>Rated Power (kW)</label>
-                <input type="number" id="pKw" value="15">
-            </div>
-            <div class="input-group">
-                <label>Full Load Speed (RPM)</label>
-                <input type="number" id="rpm" value="1450">
-            </div>
-            <div class="input-group">
-                <label>Motor Inertia (kg·m²)</label>
-                <input type="number" id="jMot" value="0.2">
-            </div>
-            <div class="input-group">
-                <label>Load Inertia (kg·m²)</label>
-                <input type="number" id="jLoad" value="0.6">
-            </div>
+            <div class="section-title full-width">Motor Datasheet</div>
+            <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
+            <div class="input-group"><label>Nominal Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
+            <div class="input-group"><label>LRT (% Overide)</label><input type="number" id="overLRT" placeholder="Typical: 150"></div>
+            <div class="input-group"><label>LRC (% Overide)</label><input type="number" id="overLRC" placeholder="Typical: 650"></div>
 
-            <div class="section-title full-width">Electrical Characteristic</div>
+            <div class="section-title full-width">Load Characteristic</div>
+            <div class="input-group"><label>Load Demand @ 100% Spd (%)</label><input type="number" id="loadDemand" value="90"></div>
+            <div class="input-group"><label>Breakaway Torque Offset (%)</label><input type="number" id="loadOffset" value="15"></div>
+            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="1.2"></div>
             <div class="input-group">
-                <label>Efficiency Class</label>
-                <select id="efficiency">
-                    <option value="1.0">IE1 / IE2 Standard</option>
-                    <option value="1.2">IE3 Premium (High Inrush)</option>
-                    <option value="1.35">IE4 Super Prem (Ext. Inrush)</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>NEC Code (Inrush)</label>
-                <select id="necCode">
-                    <option value="6">Code G (5.6 - 6.3 kVA/HP)</option>
-                    <option value="7.1">Code H (6.3 - 7.1 kVA/HP)</option>
-                    <option value="8">Code J (7.1 - 8.0 kVA/HP)</option>
+                <label>Curve Type</label>
+                <select id="loadCurve">
+                    <option value="quad">Centrifugal (Fan/Pump)</option>
+                    <option value="const">Constant (Conveyor/Lift)</option>
                 </select>
             </div>
 
-            <div class="section-title full-width">Starting Setup</div>
+            <div class="section-title full-width">Simulation Control</div>
             <div class="input-group">
-                <label>Method</label>
+                <label>Starting Method</label>
                 <select id="method">
                     <option value="dol">Direct On Line</option>
-                    <option value="stardelta">Star-Delta</option>
-                    <option value="soft">Soft Starter</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Load Curve</label>
-                <select id="loadCurve">
-                    <option value="quad">Centrifugal (n²)</option>
-                    <option value="const">Constant Torque</option>
+                    <option value="soft">Soft Starter (Current Limit)</option>
                 </select>
             </div>
             <div class="input-group full-width">
-                <label>Supply Voltage: <span id="vDisp">100</span>%</label>
+                <label>Terminal Voltage: <span id="vDisp">100</span>%</label>
                 <input type="range" id="vSupp" min="70" max="100" value="100">
             </div>
 
-            <button id="calcBtn">RUN PHYSICS ENGINE</button>
-            <button id="printBtn" class="secondary-btn">EXPORT PDF REPORT</button>
-        </div>
-
-        <div id="stallWarn" class="warning" style="display:none;">
-            ⚠️ ENGINE CRITICAL: Motor Torque < Load Torque. Stall Detected.
+            <button id="calcBtn">ANALYZE STARTING DYNAMICS</button>
         </div>
 
         <div class="results">
-            <div class="card"><span>Calculated LRT</span><b id="calcLRT">--</b></div>
-            <div class="card"><span>LRC (Inrush)</span><b id="calcLRC">--</b></div>
             <div class="card"><span>Start Time</span><b id="resTime">--</b></div>
+            <div class="card"><span>Starting Energy</span><b id="resEnergy">--</b></div>
+            <div class="card"><span>Peak Current</span><b id="resPeakI">--</b></div>
         </div>
 
         <div class="charts-container">
             <canvas id="masterChart"></canvas>
+            <p class="source-tag">Physics Engine: Modified Kloss Equation & Euler Integration Method.</p>
         </div>
     </main>
-
     <script src="app.js"></script>
 </body>
 </html>
