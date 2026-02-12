@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StartYourMotor Pro v7.6</title>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -21,35 +21,35 @@
             </div>
 
             <div class="section-title full-width">Motor Nameplate & Thermal Limit</div>
-            <div class="input-group"><label>Power (kW)</label><input type="number" id="pKw" placeholder="e.g. 30, 150, 500"></div>
-            <div class="input-group"><label>Rated Speed (RPM)</label><input type="number" id="rpm" placeholder="e.g. 1475, 2980"></div>
-            <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" placeholder="FLA from nameplate"></div>
-            <div class="input-group"><label>Safe Stall Time - Hot (s)</label><input type="number" id="stallTime" placeholder="Typically 10-25s"></div>
+            <div class="input-group"><label>Power (kW)</label><input type="number" id="pKw" placeholder="e.g. 30"></div>
+            <div class="input-group"><label>Speed (RPM)</label><input type="number" id="rpm" placeholder="e.g. 1475"></div>
+            <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" placeholder="FLA"></div>
+            <div class="input-group"><label>Hot Stall Time (s)</label><input type="number" id="stallTime" placeholder="Typically 15"></div>
             
             <div class="toggle-container full-width">
                 <label class="toggle-switch">
                     <input type="checkbox" id="useManual">
                     <span class="slider"></span>
                 </label>
-                <span class="toggle-label">Override Design Parameters (LRT / LRC / BDT)</span>
+                <span class="toggle-label">Override Design Parameters (LRT/LRC/BDT)</span>
             </div>
 
             <div id="manualFields" class="full-width grid-sub" style="display:none;">
-                <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" placeholder="Design B: 160%"></div>
-                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" placeholder="Design B: 650%"></div>
-                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" placeholder="Design B: 230%"></div>
+                <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" placeholder="160"></div>
+                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" placeholder="650"></div>
+                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" placeholder="230"></div>
             </div>
 
             <div class="section-title full-width">Inertia & Load Profile</div>
-            <div class="input-group"><label>Motor Inertia (kgm2)</label><input type="number" id="jMotor" placeholder="e.g. 0.5"></div>
-            <div class="input-group"><label>Load Inertia (kgm2)</label><input type="number" id="jLoad" placeholder="High inertia = long start"></div>
-            <div class="input-group"><label>Rated Load (%)</label><input type="number" id="loadDemand" placeholder="Working load e.g. 95%"></div>
-            <div class="input-group"><label>Breakaway (%)</label><input type="number" id="loadOffset" placeholder="Static friction e.g. 20%"></div>
+            <div class="input-group"><label>Motor J (kgm2)</label><input type="number" id="jMotor" placeholder="0.5"></div>
+            <div class="input-group"><label>Load J (kgm2)</label><input type="number" id="jLoad" placeholder="1.0"></div>
+            <div class="input-group"><label>Rated Load (%)</label><input type="number" id="loadDemand" placeholder="95"></div>
+            <div class="input-group"><label>Breakaway (%)</label><input type="number" id="loadOffset" placeholder="20"></div>
             <div class="input-group full-width">
                 <label>Load Curve Type</label>
                 <select id="loadCurve">
-                    <option value="quad">Centrifugal (Fan/Pump - Quadratic)</option>
-                    <option value="const">Conveyor / Crusher (Constant)</option>
+                    <option value="quad">Centrifugal (Fan/Pump)</option>
+                    <option value="const">Constant Torque (Conveyor)</option>
                 </select>
             </div>
 
@@ -58,27 +58,27 @@
                 <label>Starting Method</label>
                 <select id="method">
                     <option value="dol">Direct On Line (DOL)</option>
-                    <option value="soft">Soft Starter (Current Ramp)</option>
+                    <option value="soft">Soft Starter</option>
                 </select>
             </div>
             <div class="input-group">
                 <label>Terminal Voltage (%)</label>
-                <input type="number" id="vSuppVal" placeholder="Min allowable: 80%">
+                <input type="number" id="vSuppVal" placeholder="100">
             </div>
             
             <div id="softSettings" class="full-width grid-sub" style="display:none;">
-                <div class="input-group"><label>Initial Current (%)</label><input type="number" id="softInit" placeholder="e.g. 200%"></div>
-                <div class="input-group"><label>Current Limit (%)</label><input type="number" id="softLimit" placeholder="e.g. 350%"></div>
-                <div class="input-group"><label>Ramp Time (s)</label><input type="number" id="softRamp" placeholder="Ramp duration"></div>
+                <div class="input-group"><label>Initial Current (%)</label><input type="number" id="softInit" placeholder="200"></div>
+                <div class="input-group"><label>Current Limit (%)</label><input type="number" id="softLimit" placeholder="350"></div>
+                <div class="input-group"><label>Ramp Time (s)</label><input type="number" id="softRamp" placeholder="5"></div>
             </div>
 
             <button id="calcBtn" class="full-width">RUN THERMAL DYNAMIC ANALYSIS</button>
-            <button id="printBtn" class="secondary-btn full-width" onclick="window.print()">GENERATE TECHNICAL REPORT</button>
+            <button id="printBtn" class="secondary-btn full-width" onclick="window.print()">PRINT REPORT</button>
         </div>
 
         <div class="results">
             <div class="card" id="timeCard"><span>Start Time</span><b id="resTime">--</b></div>
-            <div class="card"><span>Integrated I²t</span><b id="resThermal">--</b></div>
+            <div class="card"><span>Integrated I2t</span><b id="resThermal">--</b></div>
             <div class="card"><span>Thermal Capacity</span><b id="resCap">--</b></div>
         </div>
 
@@ -86,6 +86,6 @@
             <canvas id="masterChart"></canvas>
         </div>
     </main>
-    <script src="./app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
