@@ -1,0 +1,15 @@
+{
+  "name": "MotorStart Pro Engineer",
+  "short_name": "MotorStart",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#3498db",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/930/930438.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

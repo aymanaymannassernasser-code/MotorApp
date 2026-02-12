@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorStart Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>MotorStart Pro</h1>
+        <span id="status-badge">Online</span>
+    </header>
+
+    <main>
+        <section class="form-container">
+            <div class="input-group">
+                <label>Rated Power (kW)</label>
+                <input type="number" id="power" value="15">
+            </div>
+            <div class="input-group">
+                <label>Voltage (V)</label>
+                <input type="number" id="voltage" value="400">
+            </div>
+            <div class="input-group">
+                <label>Inertia J (kg·m²)</label>
+                <input type="number" id="inertia" value="0.5">
+            </div>
+            <div class="input-group">
+                <label>Starting Method</label>
+                <select id="method">
+                    <option value="dol">Direct On Line (DOL)</option>
+                    <option value="stardelta">Star-Delta</option>
+                    <option value="soft">Soft Starter (3x Ir)</option>
+                </select>
+            </div>
+            <button id="calcBtn">Calculate & Plot</button>
+        </section>
+
+        <section class="results">
+            <div class="card">Starting Current: <b id="resI">--</b> A</div>
+            <div class="card">Est. Start Time: <b id="resTime">--</b> s</div>
+        </section>
+
+        <section class="charts">
+            <canvas id="torqueChart"></canvas>
+            <canvas id="currentChart"></canvas>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
