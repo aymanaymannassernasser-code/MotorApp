@@ -1,92 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StartYourMotor Pro | Suite</title>
-    <link rel="stylesheet" href="./style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <header class="no-print">
-        <h1>StartYourMotor <small>v6.0 Digital Twin</small></h1>
-        <p class="author">by Ayman Elkhodary</p>
-    </header>
+:root {
+    --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
+    --text: #f1f5f9; --border: #334155;
+}
+* { box-sizing: border-box; }
+body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+header h1 { color: var(--accent); margin: 0; font-size: 1.5rem; }
+.author { font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
 
-    <div class="print-only report-header">
-        <h1>Motor Starting Analysis Report</h1>
-        <p id="pdfProject">Project: --</p>
-        <hr>
-    </div>
+.form-container { 
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+    background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border);
+}
+.grid-sub { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; grid-column: 1 / -1; }
+.full-width { grid-column: 1 / -1; }
+.section-title { font-size: 0.7rem; color: var(--accent); font-weight: bold; margin-top: 10px; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 8px; }
 
-    <main>
-        <div class="form-container no-print">
-            <div class="input-group full-width">
-                <label>Project / Motor Reference</label>
-                <input type="text" id="projRef" placeholder="e.g. 11kV Water Injection Pump">
-            </div>
+label { font-size: 0.65rem; color: #94a3b8; margin-bottom: 3px; display: block; }
+input, select { background: #1e293b; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 5px; width: 100%; font-size: 13px; outline: none; }
+input:focus { border-color: var(--accent); }
 
-            <div class="section-title full-width">Motor Nameplate</div>
-            <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
-            <div class="input-group"><label>Full Load Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
-            <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" value="55"></div>
-            
-            <div class="input-group full-width">
-                <label><input type="checkbox" id="useManual"> Use Datasheet Overrides (LRT/LRC/BDT)</label>
-            </div>
+button { background: var(--accent); color: #0f172a; font-weight: 800; border: none; padding: 14px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+.secondary-btn { background: #334155; color: white; margin-top: 5px; }
 
-            <div id="manualFields" class="full-width grid-sub" style="display:none;">
-                <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" value="160"></div>
-                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" value="600"></div>
-                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="220"></div>
-            </div>
+.results { display: flex; gap: 10px; margin: 15px 0; }
+.card { flex: 1; background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border-bottom: 3px solid var(--accent); }
+.card span { font-size: 0.6rem; color: #94a3b8; display: block; margin-bottom: 5px; }
+.card b { font-size: 1.1rem; }
 
-            <div class="section-title full-width">Load & Inertia</div>
-            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="1.5"></div>
-            <div class="input-group"><label>Load Demand @ 100% (%)</label><input type="number" id="loadDemand" value="100"></div>
-            <div class="input-group"><label>Breakaway Offset (%)</label><input type="number" id="loadOffset" value="20"></div>
-            <div class="input-group">
-                <label>Load Curve</label>
-                <select id="loadCurve">
-                    <option value="quad">Centrifugal (Fan/Pump)</option>
-                    <option value="const">Constant (Conveyor)</option>
-                </select>
-            </div>
+.charts-container { background: white; padding: 15px; border-radius: 10px; height: 450px; margin-top: 10px; }
+.source-tag { font-size: 0.6rem; color: #64748b; text-align: center; margin-top: 10px; }
 
-            <div class="section-title full-width">Starter Configuration</div>
-            <div class="input-group">
-                <label>Method</label>
-                <select id="method">
-                    <option value="dol">Direct On Line</option>
-                    <option value="soft">Soft Starter</option>
-                </select>
-            </div>
-            
-            <div id="softSettings" class="full-width grid-sub" style="display:none;">
-                <div class="input-group"><label>Initial Current (%)</label><input type="number" id="softInit" value="200"></div>
-                <div class="input-group"><label>Current Limit (%)</label><input type="number" id="softLimit" value="350"></div>
-                <div class="input-group"><label>Ramp Time (s)</label><input type="number" id="softRamp" value="5"></div>
-            </div>
-
-            <div class="input-group full-width">
-                <label>Network Voltage: <span id="vDisp">100</span>%</label>
-                <input type="range" id="vSupp" min="70" max="100" value="100">
-            </div>
-
-            <button id="calcBtn" class="full-width">ANALYZE START</button>
-            <button id="printBtn" class="secondary-btn full-width">GENERATE REPORT</button>
-        </div>
-
-        <div class="results">
-            <div class="card"><span>RUN TIME</span><b id="resTime">--</b></div>
-            <div class="card"><span>THERMAL STRESS</span><b id="resThermal">--</b></div>
-        </div>
-
-        <div class="charts-container">
-            <canvas id="masterChart"></canvas>
-            <p class="source-tag">Normalized Kloss Model | Clamped Physics Engine</p>
-        </div>
-    </main>
-    <script src="./app.js"></script>
-</body>
-</html>
+@media (max-width: 600px) { .form-container { grid-template-columns: 1fr; } .grid-sub { grid-template-columns: 1fr; } }
+@media print { .no-print { display: none !important; } .print-only { display: block; color: black; } body { background: white; } }
+.print-only { display: none; }
