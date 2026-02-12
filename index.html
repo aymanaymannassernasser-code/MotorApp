@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StartYourMotor Pro | Suite</title>
+    <title>StartYourMotor Pro | Engineering Suite</title>
     <link rel="stylesheet" href="./style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>v6.0 Digital Twin</small></h1>
+        <h1>StartYourMotor <small>Digital Twin v7.0</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
     <div class="print-only report-header">
-        <h1>Motor Starting Analysis Report</h1>
+        <h1>Motor Starting & Thermal Analysis Report</h1>
         <p id="pdfProject">Project: --</p>
         <hr>
     </div>
@@ -22,14 +22,17 @@
     <main>
         <div class="form-container no-print">
             <div class="input-group full-width">
-                <label>Project / Motor Reference</label>
-                <input type="text" id="projRef" placeholder="e.g. 11kV Water Injection Pump">
+                <label>Project / Reference</label>
+                <input type="text" id="projRef" placeholder="e.g. 400V Cooling Tower Fan">
             </div>
 
-            <div class="section-title full-width">Motor Nameplate</div>
-            <div class="input-group"><label>Rating (kW)</label><input type="number" id="pKw" value="30"></div>
-            <div class="input-group"><label>Full Load Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
+            <div class="section-title full-width">Nameplate & Thermal Limits</div>
+            <div class="input-group"><label>Power (kW)</label><input type="number" id="pKw" value="30"></div>
+            <div class="input-group"><label>Voltage (V)</label><input type="number" id="vNom" value="400"></div>
+            <div class="input-group"><label>Speed (RPM)</label><input type="number" id="rpm" value="1475"></div>
             <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" value="55"></div>
+            <div class="input-group"><label>Permissible Stall (s)</label><input type="number" id="stallTime" value="15"></div>
+            <div class="input-group"><label>Thermal Limit (A²s)</label><input type="number" id="thermalLimit" value="450000"></div>
             
             <div class="input-group full-width">
                 <label><input type="checkbox" id="useManual"> Use Datasheet Overrides (LRT/LRC/BDT)</label>
@@ -37,23 +40,24 @@
 
             <div id="manualFields" class="full-width grid-sub" style="display:none;">
                 <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" value="160"></div>
-                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" value="600"></div>
-                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="220"></div>
+                <div class="input-group"><label>LRC (%)</label><input type="number" id="overLRC" value="650"></div>
+                <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="230"></div>
             </div>
 
-            <div class="section-title full-width">Load & Inertia</div>
-            <div class="input-group"><label>Total Inertia J (kg·m²)</label><input type="number" id="jTotal" value="1.5"></div>
-            <div class="input-group"><label>Load Demand @ 100% (%)</label><input type="number" id="loadDemand" value="100"></div>
-            <div class="input-group"><label>Breakaway Offset (%)</label><input type="number" id="loadOffset" value="20"></div>
+            <div class="section-title full-width">Inertia & Load Profile</div>
+            <div class="input-group"><label>Motor Inertia (kg·m²)</label><input type="number" id="jMotor" value="0.5"></div>
+            <div class="input-group"><label>Load Inertia (kg·m²)</label><input type="number" id="jLoad" value="1.0"></div>
+            <div class="input-group"><label>Load Demand @ 100% (%)</label><input type="number" id="loadDemand" value="95"></div>
+            <div class="input-group"><label>Breakaway Torque (%)</label><input type="number" id="loadOffset" value="20"></div>
             <div class="input-group">
                 <label>Load Curve</label>
                 <select id="loadCurve">
-                    <option value="quad">Centrifugal (Fan/Pump)</option>
-                    <option value="const">Constant (Conveyor)</option>
+                    <option value="quad">Centrifugal (n²)</option>
+                    <option value="const">Constant Torque</option>
                 </select>
             </div>
 
-            <div class="section-title full-width">Starter Configuration</div>
+            <div class="section-title full-width">Starter Controls</div>
             <div class="input-group">
                 <label>Method</label>
                 <select id="method">
@@ -69,22 +73,23 @@
             </div>
 
             <div class="input-group full-width">
-                <label>Network Voltage: <span id="vDisp">100</span>%</label>
+                <label>System Voltage: <span id="vDisp">100</span>%</label>
                 <input type="range" id="vSupp" min="70" max="100" value="100">
             </div>
 
-            <button id="calcBtn" class="full-width">ANALYZE START</button>
+            <button id="calcBtn" class="full-width">RUN DYNAMIC SIMULATION</button>
             <button id="printBtn" class="secondary-btn full-width">GENERATE REPORT</button>
         </div>
 
         <div class="results">
-            <div class="card"><span>RUN TIME</span><b id="resTime">--</b></div>
-            <div class="card"><span>THERMAL STRESS</span><b id="resThermal">--</b></div>
+            <div class="card"><span>START TIME</span><b id="resTime">--</b></div>
+            <div class="card"><span>I²t (A²s)</span><b id="resThermal">--</b></div>
+            <div class="card"><span>THERMAL CAP.</span><b id="resCap">--</b></div>
         </div>
 
         <div class="charts-container">
             <canvas id="masterChart"></canvas>
-            <p class="source-tag">Normalized Kloss Model | Clamped Physics Engine</p>
+            <p class="source-tag">Engine: Riemann Sum Integration | Modified Kloss Approximation</p>
         </div>
     </main>
     <script src="./app.js"></script>
