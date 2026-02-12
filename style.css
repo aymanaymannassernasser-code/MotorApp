@@ -1,63 +1,31 @@
 :root {
-    --bg: #1a1a1a;
-    --card: #2d2d2d;
-    --accent: #3498db;
-    --text: #e0e0e0;
+    --bg: #f4f7f6;
+    --card: #ffffff;
+    --accent: #2c3e50;
+    --text: #333;
+    --danger: #e74c3c;
 }
 
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: 10px;
-}
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+header { text-align: center; color: var(--accent); margin-bottom: 20px; border-bottom: 3px solid var(--accent); }
 
-header {
-    text-align: center;
-    border-bottom: 2px solid var(--accent);
-    margin-bottom: 20px;
-}
-
-.form-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    background: var(--card);
-    padding: 15px;
-    border-radius: 8px;
+.form-container { 
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+    gap: 15px; background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .input-group { display: flex; flex-direction: column; }
+label { font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
+input, select, button { padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 1rem; }
 
-input, select, button {
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    background: #333;
-    color: white;
-    margin-top: 5px;
+button { 
+    background: var(--accent); color: white; font-weight: bold; border: none; cursor: pointer; 
+    grid-column: 1 / -1; margin-top: 10px; transition: 0.3s;
 }
+button:hover { background: #34495e; }
 
-button {
-    grid-column: span 2;
-    background: var(--accent);
-    font-weight: bold;
-    cursor: pointer;
-}
+.results { display: flex; gap: 10px; margin: 20px 0; }
+.card { flex: 1; background: var(--card); padding: 15px; border-radius: 8px; text-align: center; border-top: 4px solid var(--accent); }
+.warning { background: #fdf2f2; color: var(--danger); padding: 15px; border-radius: 8px; border-left: 5px solid var(--danger); margin-bottom: 15px; font-weight: bold; }
 
-.results {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.card {
-    flex: 1;
-    background: var(--card);
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.charts { margin-top: 20px; background: white; border-radius: 8px; padding: 10px; }
+.charts { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
