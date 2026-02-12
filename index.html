@@ -2,93 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StartYourMotor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartYourMotor Pro</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor</h1>
+        <h1>StartYourMotor <small>Pro v3.0</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
     <div class="print-only report-header">
-        <h1>Motor Starting Simulation Report</h1>
-        <p id="pdfProjectName">Project: Standard Calculation</p>
-        <p>Expert: Ayman Elkhodary</p>
+        <h1>Motor Simulation & Protection Report</h1>
+        <p id="pdfProject">Project: --</p>
         <hr>
     </div>
 
     <main>
-        <section class="form-container no-print">
+        <div class="form-container no-print">
+            <div class="section-title full-width">Nameplate & Load Data</div>
             <div class="input-group full-width">
-                <label>Project / Motor Reference</label>
-                <input type="text" id="projectName" placeholder="e.g. Main Pump 01">
+                <label>Project Reference</label>
+                <input type="text" id="projName" placeholder="e.g. Compressor 101">
             </div>
             <div class="input-group">
                 <label>Rated Power (kW)</label>
-                <input type="number" id="power" value="15">
+                <input type="number" id="pKw" value="15">
             </div>
             <div class="input-group">
-                <label>Motor Design</label>
-                <select id="motorDesign">
-                    <option value="N">Design N (Standard)</option>
-                    <option value="H">Design H (High Torque)</option>
+                <label>Full Load Speed (RPM)</label>
+                <input type="number" id="rpm" value="1450">
+            </div>
+            <div class="input-group">
+                <label>Motor Inertia (kg·m²)</label>
+                <input type="number" id="jMot" value="0.2">
+            </div>
+            <div class="input-group">
+                <label>Load Inertia (kg·m²)</label>
+                <input type="number" id="jLoad" value="0.6">
+            </div>
+
+            <div class="section-title full-width">Electrical Characteristic</div>
+            <div class="input-group">
+                <label>Efficiency Class</label>
+                <select id="efficiency">
+                    <option value="1.0">IE1 / IE2 Standard</option>
+                    <option value="1.2">IE3 Premium (High Inrush)</option>
+                    <option value="1.35">IE4 Super Prem (Ext. Inrush)</option>
                 </select>
             </div>
             <div class="input-group">
-                <label>Inertia J (kg·m²)</label>
-                <input type="number" id="inertia" value="0.8">
-            </div>
-            <div class="input-group">
-                <label>Load Type</label>
-                <select id="loadType">
-                    <option value="fan">Fan/Pump (n²)</option>
-                    <option value="const">Constant Torque</option>
+                <label>NEC Code (Inrush)</label>
+                <select id="necCode">
+                    <option value="6">Code G (5.6 - 6.3 kVA/HP)</option>
+                    <option value="7.1">Code H (6.3 - 7.1 kVA/HP)</option>
+                    <option value="8">Code J (7.1 - 8.0 kVA/HP)</option>
                 </select>
             </div>
+
+            <div class="section-title full-width">Starting Setup</div>
             <div class="input-group">
                 <label>Method</label>
                 <select id="method">
-                    <option value="dol">DOL</option>
+                    <option value="dol">Direct On Line</option>
                     <option value="stardelta">Star-Delta</option>
                     <option value="soft">Soft Starter</option>
                 </select>
             </div>
-            <div class="input-group" id="limitGroup" style="display:none;">
-                <label>Limit (% Ir)</label>
-                <input type="number" id="currentLimit" value="300">
+            <div class="input-group">
+                <label>Load Curve</label>
+                <select id="loadCurve">
+                    <option value="quad">Centrifugal (n²)</option>
+                    <option value="const">Constant Torque</option>
+                </select>
             </div>
-            
             <div class="input-group full-width">
-                <label>Voltage: <span id="vVal">100</span>%</label>
-                <input type="range" id="voltageDrop" min="70" max="100" value="100">
+                <label>Supply Voltage: <span id="vDisp">100</span>%</label>
+                <input type="range" id="vSupp" min="70" max="100" value="100">
             </div>
 
-            <button id="calcBtn">SIMULATE</button>
-            <button id="printBtn" class="secondary-btn">GENERATE PDF</button>
-        </section>
+            <button id="calcBtn">RUN PHYSICS ENGINE</button>
+            <button id="printBtn" class="secondary-btn">EXPORT PDF REPORT</button>
+        </div>
 
-        <div id="warningBox" class="warning" style="display:none;">
-            ⚠️ CRITICAL: Motor Stalled or Start Time > 12s.
+        <div id="stallWarn" class="warning" style="display:none;">
+            ⚠️ ENGINE CRITICAL: Motor Torque < Load Torque. Stall Detected.
         </div>
 
         <div class="results">
-            <div class="card">
-                <span>PEAK CURRENT</span>
-                <b id="resI">--</b>
-            </div>
-            <div class="card">
-                <span>START TIME</span>
-                <b id="resTime">--</b>
-            </div>
+            <div class="card"><span>Calculated LRT</span><b id="calcLRT">--</b></div>
+            <div class="card"><span>LRC (Inrush)</span><b id="calcLRC">--</b></div>
+            <div class="card"><span>Start Time</span><b id="resTime">--</b></div>
         </div>
 
         <div class="charts-container">
-            <canvas id="torqueChart"></canvas>
+            <canvas id="masterChart"></canvas>
         </div>
     </main>
 
