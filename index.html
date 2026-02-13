@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartYourMotor Pro v8.1</title>
+    <title>StartYourMotor Pro v8.2</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Digital Twin v8.1</small></h1>
+        <h1>StartYourMotor <small>Digital Twin v8.2</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
@@ -24,10 +24,10 @@
         <div class="form-container no-print">
             <div class="input-group full-width">
                 <label>Project Reference</label>
-                <input type="text" id="projRef" placeholder="e.g. 11kV Boiler Feed Pump">
+                <input type="text" id="projRef" placeholder="e.g. Phase 2 Water Pump">
             </div>
 
-            <div class="section-title full-width">1. Motor Nameplate</div>
+            <div class="section-title full-width">1. Motor & Grid Physics</div>
             <div class="input-group"><label>Power (kW)</label><input type="number" id="pKw" value="30"></div>
             <div class="input-group"><label>Rated RPM</label><input type="number" id="rpm" value="1475"></div>
             <div class="input-group"><label>Rated Current (A)</label><input type="number" id="iRated" value="55"></div>
@@ -35,7 +35,7 @@
             
             <div class="toggle-container full-width">
                 <label class="toggle-switch"><input type="checkbox" id="useManual"><span class="slider"></span></label>
-                <span class="toggle-label">Override Datasheet (LRT/LRC/BDT)</span>
+                <span class="toggle-label">Override Motor Design (LRT/LRC/BDT)</span>
             </div>
             <div id="manualFields" class="full-width grid-sub" style="display:none;">
                 <div class="input-group"><label>LRT (%)</label><input type="number" id="overLRT" value="160"></div>
@@ -43,50 +43,43 @@
                 <div class="input-group"><label>BDT (%)</label><input type="number" id="overBDT" value="230"></div>
             </div>
 
-            <div class="section-title full-width">2. Grid & Voltage Model</div>
             <div class="toggle-container full-width">
                 <label class="toggle-switch"><input type="checkbox" id="useGridModel"><span class="slider"></span></label>
-                <span class="toggle-label">Enable Dynamic Voltage Drop Mode</span>
+                <span class="toggle-label">Dynamic Voltage Drop Mode</span>
             </div>
-            <div id="gridStatic" class="input-group full-width">
-                <label>Fixed Terminal Voltage Drop (%)</label>
-                <input type="number" id="vDropStatic" value="0">
-            </div>
+            <div id="gridStatic" class="input-group full-width"><label>System Voltage Drop (%)</label><input type="number" id="vDropStatic" value="0"></div>
             <div id="gridActive" class="full-width grid-sub" style="display:none;">
                 <div class="input-group"><label>Tx kVA</label><input type="number" id="txKva" value="1000"></div>
-                <div class="input-group"><label>Tx Impedance Z%</label><input type="number" id="txZ" value="5"></div>
+                <div class="input-group"><label>Tx Z%</label><input type="number" id="txZ" value="5"></div>
             </div>
 
-            <div class="section-title full-width">3. Mechanical Load & Inertia</div>
-            <div class="input-group"><label>Motor J (kgm²)</label><input type="number" id="jMotor" value="0.15"></div>
-            <div class="input-group"><label>Load J (kgm²)</label><input type="number" id="jLoad" value="1.5"></div>
+            <div class="section-title full-width">2. Load & Control</div>
+            <div class="input-group"><label>Total Inertia J (kgm²)</label><input type="number" id="jTotal" value="1.65"></div>
             <div class="input-group"><label>Load @ Rated (%)</label><input type="number" id="loadDemand" value="95"></div>
+            
             <div class="input-group full-width">
-                <label>Load Torque Curve</label>
-                <select id="loadCurve">
-                    <option value="quad">Centrifugal (Fan/Pump)</option>
-                    <option value="const">Constant Torque</option>
-                </select>
-            </div>
-
-            <div class="section-title full-width">4. Starting Control</div>
-            <div class="input-group">
+                <label>Control Method</label>
                 <select id="method">
                     <option value="dol">Direct On Line (DOL)</option>
-                    <option value="soft" selected>Soft Starter</option>
+                    <option value="soft" selected>Soft Starter (Advanced Ramp)</option>
                 </select>
             </div>
-            <div class="input-group"><label>Current Limit (%)</label><input type="number" id="softLimit" value="350"></div>
 
-            <button id="calcBtn" class="full-width">EXECUTE PHYSICS ANALYSIS</button>
+            <div id="softFields" class="full-width grid-sub">
+                <div class="input-group"><label>Init. Voltage (%)</label><input type="number" id="softInitV" value="40"></div>
+                <div class="input-group"><label>Ramp Time (s)</label><input type="number" id="softRamp" value="10"></div>
+                <div class="input-group"><label>Current Limit (%)</label><input type="number" id="softLimit" value="350"></div>
+            </div>
+
+            <button id="calcBtn" class="full-width">EXECUTE ANALYSIS</button>
             <button id="pdfBtn" class="secondary-btn full-width">EXPORT PDF REPORT</button>
         </div>
 
         <div class="results">
             <div class="card"><span>Start Time</span><b id="resTime">--</b></div>
-            <div class="card"><span>Operating Speed</span><b id="resOpSpeed">--</b></div>
+            <div class="card"><span>Steady State</span><b id="resOpSpeed">--</b></div>
             <div class="card"><span>Thermal Stress</span><b id="resCap">--</b></div>
-            <div class="card"><span>Min Start Voltage</span><b id="resVStart">--</b></div>
+            <div class="card"><span>Min V @ Start</span><b id="resVStart">--</b></div>
         </div>
 
         <div class="charts-container">
