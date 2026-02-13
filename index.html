@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartYourMotor Pro v7.9.7</title>
+    <title>StartYourMotor Pro v7.9.8</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
     <header class="no-print">
-        <h1>StartYourMotor <small>Digital Twin v7.9.7 (Voltage Drop Analysis)</small></h1>
+        <h1>StartYourMotor <small>Digital Twin v7.9.8</small></h1>
         <p class="author">by Ayman Elkhodary</p>
     </header>
 
     <div class="print-header">
-        <h2 id="pdfTitle">Motor Starting & Stall Analysis Report</h2>
+        <h2>Motor Starting & Stall Analysis Report</h2>
         <p id="printRef"></p>
         <hr>
     </div>
@@ -45,7 +45,7 @@
             </div>
 
             <div class="section-title full-width">Grid & Load Condition</div>
-            <div class="input-group"><label>System Voltage Drop (%)</label><input type="number" id="vDrop" value="10" title="Voltage drop at the motor terminals during starting"></div>
+            <div class="input-group"><label>System Voltage Drop (%)</label><input type="number" id="vDrop" value="10"></div>
             <div class="input-group"><label>Load @ Rated (%)</label><input type="number" id="loadDemand" value="95"></div>
             <div class="input-group"><label>Motor J (kgm2)</label><input type="number" id="jMotor" value="0.15"></div>
             <div class="input-group"><label>Load J (kgm2)</label><input type="number" id="jLoad" value="1.5"></div>
